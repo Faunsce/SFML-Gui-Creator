@@ -7,7 +7,7 @@ int main() {
 	enum DIRECTION {LEFT, RIGHT};
 	DIRECTION direction = LEFT;
 	float speed = 10.0f;
-
+	sf::Clock programClock;
 	while (window.isOpen()) {
 		// Input
 		while (window.pollEvent(evnt)) {
@@ -27,9 +27,9 @@ int main() {
 			direction = DIRECTION::RIGHT;
 		}
 		if (direction == DIRECTION::LEFT) {
-			testBox.move(sf::Vector2f(-speed, 0.0f));
+			testBox.move(sf::Vector2f(-speed * programClock.restart().asSeconds(), 0.0f));
 		} else if (direction == DIRECTION::RIGHT) {
-			testBox.move(sf::Vector2f(speed, 0.0f));
+			testBox.move(sf::Vector2f(speed * programClock.restart().asSeconds(), 0.0f));
 		}
 		// Draw
 		window.clear();
