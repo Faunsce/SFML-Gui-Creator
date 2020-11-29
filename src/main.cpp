@@ -37,8 +37,16 @@ int main() {
 			case sf::Event::KeyPressed: {
 				switch (evnt.key.code)
 				{
+				case sf::Keyboard::BackSpace: {
+					if (activeBox != nullptr) {
+						activeBox->setFillColor(sf::Color::White);
+						activeBox = nullptr;
+					}
+					break;
+				}
 				case sf::Keyboard::Escape: {
 					window.close();
+					break;
 				}
 				default:
 					break;
