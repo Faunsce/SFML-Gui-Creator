@@ -1,10 +1,13 @@
-#include <vector>
+#include <deque>
 #include <SFML/Graphics.hpp>
 
 int main() {
 	sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Ur mom", sf::Style::Default);
 	sf::Event evnt;
 	sf::Clock programClock;
+	sf::Time elapsedClockTime;
+	std::deque<long double> frameTimes;
+	short int framesToTrack = 100;
 
 	std::vector<sf::RectangleShape> boxes{
 		sf::RectangleShape(sf::Vector2f(100, 100)),
@@ -13,7 +16,11 @@ int main() {
 	sf::RectangleShape* activeBox = nullptr;
 
 	while (window.isOpen()) {
-		long double elapsedTime = programClock.restart().asSeconds();
+		// Time && FPS Calculations
+		elapsedClockTime = programClock.restart();
+		if (frameTimes.size() > framesToTrack) {frameTimes.pop_back();}
+		frameTimes.push_front(elapsedClockTime.asMilliseconds()); 
+		long double elapsedTime = elapsedClockTime.asSeconds();
 		// Input
 		while (window.pollEvent(evnt)) {
 			switch (evnt.type)
@@ -63,7 +70,14 @@ int main() {
 				break;
 			}
 		}
+
 		// Logic
+		window.setTitle("FPS : [" + std::to_string((int)((1000.0 * frameTimes.size()) /
+					[&frameTimes](long double totalFrameTime = 0.0L)->long double {
+						for (const auto& frameTime : frameTimes) {
+							totalFrameTime += frameTime;
+						}
+					return totalFrameTime; }())) + "]");
 
 		// Draw
 		window.clear();
