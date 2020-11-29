@@ -64,7 +64,7 @@ int main() {
 							break;
 						}
 					}
-					if (!boxHit) {
+					if (!boxHit && activeBox != nullptr) {
 						activeBox->setFillColor(sf::Color::White);
 						activeBox = nullptr;
 					}
