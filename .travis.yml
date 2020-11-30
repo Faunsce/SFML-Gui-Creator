@@ -4,55 +4,131 @@ language: cpp
 # Matrix
 matrix:
   include:
-  # windows msvc
-  - os: windows
+  # Windows msvc Release
+  - name: "Windows Release"
+    os: windows
     env:
-      - CONAN_SETTINGS_FLAG="-s compiler=\"Visual Studio\" -s compiler.version=15 -s arch=x86_64 -s build_type=Release -b missing"
+      - CONAN_SETTINGS_FLAG="-g cmake -s compiler=\"Visual Studio\" -s compiler.version=15 -s arch=x86_64 -s build_type=Release -b missing"
       - CMAKE_GENERATOR_FLAG="-G \"Visual Studio 15 2017\" -DCMAKE_GENERATOR_PLATFORM=x64"
       - BUILD_CONFIG=Release
-  # MacOS clang
-  - os: osx
+      - DEPLOY_EXE=Windows_x64.zip
+    cache:
+      directories:
+        - $HOME/.conan/data
+
+  # Windows msvc Debug
+  - name: "Windows Debug"
+    os: windows
+    env:
+      - CONAN_SETTINGS_FLAG="-g cmake -s compiler=\"Visual Studio\" -s compiler.version=15 -s arch=x86_64 -s build_type=Debug -b missing"
+      - CMAKE_GENERATOR_FLAG="-G \"Visual Studio 15 2017\" -DCMAKE_GENERATOR_PLATFORM=x64"
+      - BUILD_CONFIG=Debug
+      - DEPLOY_EXE=Windows_x64.zip
+    cache:
+      directories:
+        - $HOME/.conan/data
+
+  # MacOS clang Release
+  - name: "MacOS Release"
+    os: osx
     osx_image: xcode10
     env:
       - compiler=clang
       - COMPILER_CC=clang
       - COMPILER_CXX=clang++
-      - CONAN_SETTINGS_FLAG=""
+      - CONAN_SETTINGS_FLAG="-g cmake -s build_type=Release -b missing"
       - CMAKE_GENERATOR_FLAG=""
       - BUILD_CONFIG=Release
-  # Linux gcc
-  - os: linux
+      - DEPLOY_EXE=OSX_x64.zip
+    cache:
+      directories:
+        - $HOME/.conan/data
+
+  # MacOS clang Debug
+  - name: "MacOS Debug"
+    os: osx
+    osx_image: xcode10
+    env:
+      - compiler=clang
+      - COMPILER_CC=clang
+      - COMPILER_CXX=clang++
+      - CONAN_SETTINGS_FLAG="-g cmake -s build_type=Debug -b missing"
+      - CMAKE_GENERATOR_FLAG=""
+      - BUILD_CONFIG=Debug
+      - DEPLOY_EXE=OSX_x64.zip
+    cache:
+      directories:
+        - $HOME/.conan/data
+
+  # Linux gcc Release
+  - name: "Linux Release"
+    os: linux
     dist: xenial
     env:
       - COMPILER=g++-8
       - COMPILER_CC=gcc-8
       - COMPILER_CXX=g++-8
-      - CONAN_SETTINGS_FLAG="-s compiler.libcxx=libstdc++11"
+      - CONAN_SETTINGS_FLAG="-g cmake -s build_type=Release -s compiler.libcxx=libstdc++11 -b missing"
       - CMAKE_GENERATOR_FLAG="-G \"Unix Makefiles\""
       - BUILD_CONFIG=Release
+      - DEPLOY_EXE=Linux_x64.zip
+#    cache:
+#      directories:
+#        - $HOME/.conan/data
     addons:
       apt:
         sources: ['ubuntu-toolchain-r-test']
         packages: ['gcc-8', 'g++-8' ]
 
+  # Linux gcc Debug
+  - name: "Linux Debug"
+    os: linux
+    dist: xenial
+    env:
+      - COMPILER=g++-8
+      - COMPILER_CC=gcc-8
+      - COMPILER_CXX=g++-8
+      - CONAN_SETTINGS_FLAG="-g cmake -s build_type=Debug -s compiler.libcxx=libstdc++11 -b missing"
+      - CMAKE_GENERATOR_FLAG="-G \"Unix Makefiles\""
+      - BUILD_CONFIG=Debug
+      - DEPLOY_EXE=Linux_x64.zip
+#    cache:
+#      directories:
+#        - $HOME/.conan/data
+    addons:
+      apt:
+        sources: ['ubuntu-toolchain-r-test']
+        packages: ['gcc-8', 'g++-8' ]
+  allow_failures:
+  - os: osx
+  - os: linux
+  fast_finish: true
+
 # The pre-install script. On windows it will install conan via chocolatey
-install:
+before_install:
   - |
      if [[ "${TRAVIS_OS_NAME}" == "windows" ]]; then
-       choco install conan
-     else
-       pip install --user --upgrade pip
-       pip install --user conan --upgrade
+       choco install python3 --version 3.7.4
+       export PATH="/c/Python37:/c/Python37/Scripts:$PATH"
+       python -m pip install --upgrade pip
      fi
+install:
+  - |
+    if [[ "${TRAVIS_OS_NAME}" == "windows" ]]; then
+      pip install conan
+    else
+      pip install --user --upgrade pip
+      pip install --user conan --upgrade
+    fi
 # Setup Build
 before_script:
   # The path to conan does not get set properly because travis does not restart the shell
   # so we ahve to manually add the path it on Windows.
   - if [[ "${TRAVIS_OS_NAME}" == "windows" ]]; then export PATH=$PATH:/c/Program\ Files/Conan/conan; fi
   - if [[ "${TRAVIS_OS_NAME}" == "osx" ]]; then export PATH=$PATH:/Users/travis/Library/Python/2.7/bin; fi
-  
+
   - if [ -f conanfile.txt ]; then export USE_CONAN=TRUE; fi
-  
+
   - if [[ "${USE_CONAN}" == "TRUE" ]]; then conan user; fi
   - if [[ "${USE_CONAN}" == "TRUE" ]]; then conan remote add bincrafters https://api.bintray.com/conan/bincrafters/public-conan; fi
 
@@ -70,4 +146,24 @@ script:
   # Cmake Build
   - mkdir build && cd build
   - eval cmake .. ${CMAKE_GENERATOR_FLAG}
-  - eval cmake --build . --config "${BUILD_CONFIG}"
+  - eval cmake --build . --config ${BUILD_CONFIG}
+
+# Check dir
+before_deploy:
+  - |
+    if [[ "${TRAVIS_OS_NAME}" == "windows" ]]; then
+      echo
+    else
+      pwd
+      ls bin/
+      zip -r ${DEPLOY_EXE} bin/*
+    fi
+# Deploy to github
+deploy:
+  provider: releases
+  api_key: ${GITHUB_TOKEN}
+  file: ${DEPLOY_EXE}
+  skip_cleanup: true
+  on:
+    tags: true
+    condition: "$BUILD_CONFIG = Release"
