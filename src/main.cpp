@@ -1,9 +1,20 @@
+// STD LIB
 #include <iostream>
 #include <queue>
+// EXT LIB
 #include <SFML/Graphics.hpp>
+// LOCAL LIB
+#include "funcs.hpp"
 
 int main() {
+	// Window Setup
 	sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Ur mom", sf::Style::Default);
+	sf::View view(sf::Vector2f(1920.0f / 2.0f, 1080.0f / 2.0f), sf::Vector2f(1920.0f, 1080.0f));
+	faun::adaptView(window, view);
+	window.setPosition(sf::Vector2i(1, 0));
+	window.setKeyRepeatEnabled(false);
+
+	// Time Tracking
 	sf::Event evnt;
 	sf::Clock programClock;
 	std::queue<long double> frames;
@@ -11,8 +22,8 @@ int main() {
 	long double totalElapsedTime = 0.0L;
 
 	std::vector<sf::RectangleShape> boxes{
-		sf::RectangleShape(sf::Vector2f(100, 100)),
-		sf::RectangleShape(sf::Vector2f(100, 100))
+		sf::RectangleShape(sf::Vector2f(200, 100)),
+		sf::RectangleShape(sf::Vector2f(100, 200))
 	};
 	sf::RectangleShape* activeBox = nullptr;
 
@@ -21,7 +32,7 @@ int main() {
 		// Time && FPS Calculations
 		long double elapsedTime = programClock.restart().asSeconds();
 		totalElapsedTime += elapsedTime;
-		while (frames.front() < totalElapsedTime - 1.0L) {
+		while (!frames.empty() && frames.front() < totalElapsedTime - 1.0L ) {
 			frames.pop();
 		}
 		frames.push(totalElapsedTime);
@@ -30,6 +41,10 @@ int main() {
 		while (window.pollEvent(evnt)) {
 			switch (evnt.type)
 			{
+			case sf::Event::Resized: {
+				faun::adaptView(window, view);
+				break;
+			}
 			case sf::Event::Closed: {
 				window.close();
 				break;
@@ -53,7 +68,7 @@ int main() {
 				}
 			}
 			case sf::Event::MouseButtonPressed: {
-				sf::Vector2f mousePos = static_cast<sf::Vector2f>(sf::Mouse::getPosition());
+				sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window), window.getView());
 				if (evnt.mouseButton.button == sf::Mouse::Left) {
 					if (activeBox != nullptr) {
 						activeBox->setPosition(mousePos);
@@ -61,12 +76,12 @@ int main() {
 				}
 				else if (evnt.mouseButton.button == sf::Mouse::Right) {
 					bool boxHit = false;
-					for (auto& box : boxes) {
-						if (box.getGlobalBounds().contains(mousePos)) {
+					for (int i = boxes.size() - 1; i >= 0; --i) {
+						if (boxes[i].getGlobalBounds().contains(mousePos)) {
 							if (activeBox != nullptr) {
 								activeBox->setFillColor(sf::Color::White);
 							}
-							activeBox = &box;
+							activeBox = &boxes[i];
 							activeBox->setFillColor(sf::Color::Red);
 							boxHit = true;
 							break;
