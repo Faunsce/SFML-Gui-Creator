@@ -3,5 +3,6 @@
 
 namespace faun
 {
-	void adaptView(sf::RenderWindow&, sf::View&);
+	void adaptView(float, sf::View&);
+	void adaptView(sf::View&, sf::View&);
 }

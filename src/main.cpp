@@ -9,8 +9,10 @@
 int main() {
 	// Window Setup
 	sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Ur mom", sf::Style::Default);
-	sf::View view(sf::Vector2f(1920.0f / 2.0f, 1080.0f / 2.0f), sf::Vector2f(1920.0f, 1080.0f));
-	faun::adaptView(window, view);
+	sf::View mainView(sf::Vector2f(1920.0f / 2.0f, 1080.0f / 2.0f), sf::Vector2f(1920.0f, 1080.0f));
+	sf::View editorView(sf::Vector2f((1920.0f / 2.0f) + 1920.0f, (1080.0f / 2.0f) + 1920.0f), sf::Vector2f(1920.0f, 1080.0f));
+	faun::adaptView((static_cast<float>(window.getSize().x) / static_cast<float>(window.getSize().y)), mainView);
+	faun::adaptView(editorView, mainView);
 	window.setPosition(sf::Vector2i(1, 0));
 	window.setKeyRepeatEnabled(false);
 
@@ -21,10 +23,19 @@ int main() {
 	frames.push(0.0L);
 	long double totalElapsedTime = 0.0L;
 
-	std::vector<sf::RectangleShape> boxes{
+	// Scene Setup
+	std::vector<sf::RectangleShape> programObjects{ // Program
+		sf::RectangleShape(sf::Vector2f(1920.0f, 1080.0f))
+	};
+	programObjects[0].setFillColor(sf::Color::Green);
+	std::vector<sf::RectangleShape> editorObjects{ // Stuff in editor
 		sf::RectangleShape(sf::Vector2f(200, 100)),
 		sf::RectangleShape(sf::Vector2f(100, 200))
 	};
+	editorObjects[0].setFillColor(sf::Color::Red);
+	editorObjects[1].setFillColor(sf::Color::Blue);
+	editorObjects[0].move(1920, 1080);
+	editorObjects[1].move(1920, 1080);
 	sf::RectangleShape* activeBox = nullptr;
 
 	while (window.isOpen()) {
@@ -42,7 +53,8 @@ int main() {
 			switch (evnt.type)
 			{
 			case sf::Event::Resized: {
-				faun::adaptView(window, view);
+				faun::adaptView((static_cast<float>(window.getSize().x) / static_cast<float>(window.getSize().y)), mainView);
+				faun::adaptView(editorView, mainView);
 				break;
 			}
 			case sf::Event::Closed: {
@@ -68,7 +80,11 @@ int main() {
 				}
 			}
 			case sf::Event::MouseButtonPressed: {
-				sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window), window.getView());
+				sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window), 
+					[&mainView, &editorView]{
+						return mainView;
+					}()
+				);
 				if (evnt.mouseButton.button == sf::Mouse::Left) {
 					if (activeBox != nullptr) {
 						activeBox->setPosition(mousePos);
@@ -76,12 +92,12 @@ int main() {
 				}
 				else if (evnt.mouseButton.button == sf::Mouse::Right) {
 					bool boxHit = false;
-					for (int i = boxes.size() - 1; i >= 0; --i) {
-						if (boxes[i].getGlobalBounds().contains(mousePos)) {
+					for (int i = editorObjects.size() - 1; i >= 0; --i) {
+						if (editorObjects[i].getGlobalBounds().contains(mousePos)) {
 							if (activeBox != nullptr) {
 								activeBox->setFillColor(sf::Color::White);
 							}
-							activeBox = &boxes[i];
+							activeBox = &editorObjects[i];
 							activeBox->setFillColor(sf::Color::Red);
 							boxHit = true;
 							break;
@@ -101,11 +117,16 @@ int main() {
 
 		// Logic
 		window.setTitle("FPS : [" + std::to_string(frames.size()) + "]");
-
+		editorObjects[0].move(10.0f * elapsedTime, 0.0f);
 		// Draw
 		window.clear();
-		for (const auto& box : boxes) {
-			window.draw(box);
+		window.setView(mainView);
+		for (const auto& object : programObjects) {
+			window.draw(object);
+		}
+		window.setView(editorView);
+		for (const auto& object : editorObjects) {
+			window.draw(object);
 		}
 		window.display();
 
