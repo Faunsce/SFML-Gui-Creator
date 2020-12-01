@@ -125,10 +125,11 @@ int main() {
 			}
 			case sf::Event::MouseButtonPressed: {
 				sf::Vector2i mousePosI = sf::Mouse::getPosition(window);
+				// TODO : Fix math for calculating if mouse is in the editor
 				bool inEditor =
 				[&mainView, &editorView, &window, &mousePosI] {
 					if (window.mapPixelToCoords(mousePosI, mainView).x > faun::TRUE_RENDER_WIDTH / 4.0 
-						|| window.mapPixelToCoords(mousePosI, mainView).y > (faun::TRUE_RENDER_HEIGHT / 4.0) * 3.0) {
+						|| window.mapPixelToCoords(mousePosI, mainView).y < faun::TRUE_RENDER_HEIGHT / 4.0) {
 						return true;
 					} else {
 						return false;
