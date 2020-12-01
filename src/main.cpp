@@ -29,13 +29,16 @@ int main() {
 	};
 	programObjects[0].setFillColor(sf::Color::Green);
 	std::vector<sf::RectangleShape> editorObjects{ // Stuff in editor
+		sf::RectangleShape(sf::Vector2f(1920, 1080)),
 		sf::RectangleShape(sf::Vector2f(200, 100)),
 		sf::RectangleShape(sf::Vector2f(100, 200))
 	};
-	editorObjects[0].setFillColor(sf::Color::Red); // Set distinct colors
-	editorObjects[1].setFillColor(sf::Color::Blue);
+	editorObjects[0].setFillColor(sf::Color::White); // Set distinct colors
+	editorObjects[1].setFillColor(sf::Color::Red); 
+	editorObjects[2].setFillColor(sf::Color::Blue);
 	editorObjects[0].move(1920, 0); // adjust to "plane"
 	editorObjects[1].move(1920, 0);
+	editorObjects[2].move(1920, 0);
 	sf::RectangleShape* activeBox = nullptr;
 
 	while (window.isOpen()) {
@@ -117,7 +120,7 @@ int main() {
 
 		// Logic
 		window.setTitle("FPS : [" + std::to_string(frames.size()) + "]");
-		editorObjects[0].move(10.0f * elapsedTime, 0.0f);
+		editorObjects[1].move(10.0f * elapsedTime, 0.0f);
 		// Draw
 		window.clear();
 		window.setView(mainView);

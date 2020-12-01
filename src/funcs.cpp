@@ -28,7 +28,7 @@ namespace faun
 
 	void adaptView(sf::View& view, sf::View& parentView) {
 		view.setViewport(sf::FloatRect(
-			(parentView.getViewport().left / 4.0f),
+			(parentView.getViewport().left + (parentView.getViewport().width / 4.0f)),
 			parentView.getViewport().top,
 			(parentView.getViewport().width / 4.0f) * 3.0f,
 			(parentView.getViewport().height / 4.0f) * 3.0f
