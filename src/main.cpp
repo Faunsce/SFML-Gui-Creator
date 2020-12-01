@@ -5,13 +5,20 @@
 #include <SFML/Graphics.hpp>
 // LOCAL LIB
 #include "funcs.hpp"
+#include "globals.hpp"
+
+double CurrentAspectRatio(sf::Vector2u size) {
+	return (static_cast<double>(size.x) / size.y);
+}
 
 int main() {
 	// Window Setup
 	sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Ur mom", sf::Style::Default);
-	sf::View mainView(sf::Vector2f(1920.0f / 2.0f, 1080.0f / 2.0f), sf::Vector2f(1920.0f, 1080.0f));
-	sf::View editorView(sf::Vector2f((1920.0f / 2.0f) + 1920.0f, (1080.0f / 2.0f)), sf::Vector2f(1920.0f, 1080.0f));
-	faun::adaptView((static_cast<float>(window.getSize().x) / static_cast<float>(window.getSize().y)), mainView);
+	sf::View mainView(sf::Vector2f(faun::TRUE_RENDER_WIDTH / 2.0, faun::TRUE_RENDER_HEIGHT / 2.0f), 
+		sf::Vector2f(faun::TRUE_RENDER_WIDTH, faun::TRUE_RENDER_HEIGHT));
+	sf::View editorView(sf::Vector2f((faun::TRUE_RENDER_WIDTH / 2.0) + faun::TRUE_RENDER_WIDTH, 
+		(faun::TRUE_RENDER_HEIGHT / 2.0)), sf::Vector2f(faun::TRUE_RENDER_WIDTH, faun::TRUE_RENDER_HEIGHT));
+	faun::adaptView(CurrentAspectRatio(window.getSize()), mainView);
 	faun::adaptView(editorView, mainView);
 	window.setPosition(sf::Vector2i(1, 0));
 	window.setKeyRepeatEnabled(false);
@@ -25,7 +32,7 @@ int main() {
 
 	// Scene Setup
 	std::vector<sf::RectangleShape> programObjects{ // Program
-		sf::RectangleShape(sf::Vector2f(1920.0f, 1080.0f))
+		sf::RectangleShape(sf::Vector2f(faun::TRUE_RENDER_WIDTH, faun::TRUE_RENDER_HEIGHT))
 	};
 	programObjects[0].setFillColor(sf::Color::Green);
 	std::vector<sf::RectangleShape> editorObjects{ // Stuff in editor
@@ -56,7 +63,7 @@ int main() {
 			switch (evnt.type)
 			{
 			case sf::Event::Resized: {
-				faun::adaptView((static_cast<float>(window.getSize().x) / static_cast<float>(window.getSize().y)), mainView);
+				faun::adaptView(CurrentAspectRatio(window.getSize()), mainView);
 				faun::adaptView(editorView, mainView);
 				break;
 			}
