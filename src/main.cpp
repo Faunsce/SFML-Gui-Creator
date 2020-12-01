@@ -10,7 +10,7 @@ int main() {
 	// Window Setup
 	sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Ur mom", sf::Style::Default);
 	sf::View mainView(sf::Vector2f(1920.0f / 2.0f, 1080.0f / 2.0f), sf::Vector2f(1920.0f, 1080.0f));
-	sf::View editorView(sf::Vector2f((1920.0f / 2.0f) + 1920.0f, (1080.0f / 2.0f) + 1920.0f), sf::Vector2f(1920.0f, 1080.0f));
+	sf::View editorView(sf::Vector2f((1920.0f / 2.0f) + 1920.0f, (1080.0f / 2.0f)), sf::Vector2f(1920.0f, 1080.0f));
 	faun::adaptView((static_cast<float>(window.getSize().x) / static_cast<float>(window.getSize().y)), mainView);
 	faun::adaptView(editorView, mainView);
 	window.setPosition(sf::Vector2i(1, 0));
@@ -32,10 +32,10 @@ int main() {
 		sf::RectangleShape(sf::Vector2f(200, 100)),
 		sf::RectangleShape(sf::Vector2f(100, 200))
 	};
-	editorObjects[0].setFillColor(sf::Color::Red);
+	editorObjects[0].setFillColor(sf::Color::Red); // Set distinct colors
 	editorObjects[1].setFillColor(sf::Color::Blue);
-	editorObjects[0].move(1920, 1080);
-	editorObjects[1].move(1920, 1080);
+	editorObjects[0].move(1920, 0); // adjust to "plane"
+	editorObjects[1].move(1920, 0);
 	sf::RectangleShape* activeBox = nullptr;
 
 	while (window.isOpen()) {
