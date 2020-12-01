@@ -1,11 +1,14 @@
 // STD LIB
 #include <iostream>
 #include <queue>
+#include <thread>
+#include <mutex>
 // EXT LIB
 #include <SFML/Graphics.hpp>
 // LOCAL LIB
 #include "funcs.hpp"
 #include "globals.hpp"
+#include "clock.hpp"
 
 double CurrentAspectRatio(sf::Vector2u size) {
 	return (static_cast<double>(size.x) / size.y);
@@ -13,7 +16,7 @@ double CurrentAspectRatio(sf::Vector2u size) {
 
 int main() {
 	// Window Setup
-	sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "Ur mom", sf::Style::Default);
+	sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "FPS : []", sf::Style::Default);
 	sf::View mainView(sf::Vector2f(faun::TRUE_RENDER_WIDTH / 2.0, faun::TRUE_RENDER_HEIGHT / 2.0f), 
 		sf::Vector2f(faun::TRUE_RENDER_WIDTH, faun::TRUE_RENDER_HEIGHT));
 	sf::View editorView(sf::Vector2f(faun::TRUE_RENDER_WIDTH / 2.0, faun::TRUE_RENDER_HEIGHT / 2.0), 
@@ -22,13 +25,12 @@ int main() {
 	faun::adaptView(editorView, mainView);
 	window.setPosition(sf::Vector2i(1, 0));
 	window.setKeyRepeatEnabled(false);
+	window.setFramerateLimit(60);
+	window.setActive(false);
 
 	// Time Tracking
 	sf::Event evnt;
-	sf::Clock programClock;
-	std::queue<long double> frames;
-	frames.push(0.0L);
-	long double totalElapsedTime = 0.0L;
+	faun::Clock mainClock;
 
 	// Scene Setup
 	std::vector<sf::RectangleShape> programObjects{ // Program
@@ -46,15 +48,34 @@ int main() {
 
 	sf::RectangleShape* activeBox = nullptr;
 
-	while (window.isOpen()) {
-
-		// Time && FPS Calculations
-		long double elapsedTime = programClock.restart().asSeconds();
-		totalElapsedTime += elapsedTime;
-		while (!frames.empty() && frames.front() < totalElapsedTime - 1.0L ) {
-			frames.pop();
+	// Rendering Thread
+	std::mutex renderMutex;
+	std::atomic_bool killRenderThread = false;
+	std::thread renderThread(
+		[&programObjects, &editorObjects, &window, &mainView, &editorView, &renderMutex, &killRenderThread]{
+			window.setActive(true);
+			while (!killRenderThread) {
+				renderMutex.lock();
+				window.clear();
+				window.setView(mainView);
+				for (const auto& object : programObjects) {
+					window.draw(object);
+				}
+				window.setView(editorView);
+				if (!editorObjects.empty()) {
+					for (const auto& object : editorObjects) {
+						window.draw(object);
+					}
+				}
+				window.display();
+				renderMutex.unlock();
+			}
+			window.close();
+			return;
 		}
-		frames.push(totalElapsedTime);
+	);
+
+	while (window.isOpen()) {
 
 		// Input
 		while (window.pollEvent(evnt)) {
@@ -66,7 +87,8 @@ int main() {
 				break;
 			}
 			case sf::Event::Closed: {
-				window.close();
+				killRenderThread = true;
+				renderThread.join();
 				break;
 			}
 			case sf::Event::KeyPressed: {
@@ -79,8 +101,22 @@ int main() {
 					}
 					break;
 				}
+				case sf::Keyboard::Enter: {
+					sf::RectangleShape newRect(sf::Vector2f(100, 100));
+					newRect.setPosition(sf::Vector2f(faun::TRUE_RENDER_WIDTH / 2.0, faun::TRUE_RENDER_HEIGHT / 2.0));
+					newRect.setFillColor(sf::Color::Cyan);
+					editorObjects.emplace_back(newRect);
+					break;
+				}
+				case sf::Keyboard::Delete: {
+					if (!editorObjects.empty()) {
+						editorObjects.pop_back();
+					}
+					break;
+				}
 				case sf::Keyboard::Escape: {
-					window.close();
+					killRenderThread = true;
+					renderThread.join();
 					break;
 				}
 				default:
@@ -90,7 +126,7 @@ int main() {
 			case sf::Event::MouseButtonPressed: {
 				sf::Vector2f mousePos = window.mapPixelToCoords(sf::Mouse::getPosition(window), 
 					[&mainView, &editorView]{
-						return mainView;
+						return editorView;
 					}()
 				);
 				if (evnt.mouseButton.button == sf::Mouse::Left) {
@@ -122,22 +158,23 @@ int main() {
 				break;
 			}
 		}
-
 		// Logic
-		window.setTitle("FPS : [" + std::to_string(frames.size()) + "]");
-		editorObjects[1].move(10.0f * elapsedTime, 0.0f);
-		// Draw
-		window.clear();
+		mainClock.Update();
+		window.setTitle(std::to_string(mainClock.FPS()));
+
+
+		// Drawing
+		/*window.clear();
 		window.setView(mainView);
 		for (const auto& object : programObjects) {
 			window.draw(object);
 		}
 		window.setView(editorView);
-		for (const auto& object : editorObjects) {
-			window.draw(object);
+		if (!editorObjects.empty()) {
+			for (const auto& object : editorObjects) {
+				window.draw(object);
+			}
 		}
-		window.display();
-
+		window.display();*/
 	}
-
 }
