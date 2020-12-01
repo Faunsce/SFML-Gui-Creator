@@ -13,8 +13,7 @@ endif()
 
 # Project Creation
 project (SFMLGuiCreator)
-set (CMAKE_CXX_STANDARD 17)
-set( EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin )
+set (EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin )
 set (WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/bin/assets)
 option(BUILD_SHARED_LIBS "Enable compilation of shared libraries" OFF)
 
