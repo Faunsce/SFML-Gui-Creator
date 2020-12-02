@@ -3,15 +3,22 @@
 #include <queue>
 #include <thread>
 #include <mutex>
+#include <future>
 // EXT LIB
 #include <SFML/Graphics.hpp>
 // LOCAL LIB
-#include "funcs.hpp"
-#include "globals.hpp"
-#include "clock.hpp"
+#include "Funcs.hpp"
+#include "Globals.hpp"
+#include "Clock.hpp"
+
+enum ORDERS { RENDER = 0, PAUSE = 1, SEPPUKU = 2 };
 
 double CurrentAspectRatio(sf::Vector2u size) {
 	return (static_cast<double>(size.x) / size.y);
+}
+
+void killThread(std::atomic_bool& renderOrders) {
+	renderOrders = ORDERS::SEPPUKU;
 }
 
 int main() {
@@ -49,29 +56,43 @@ int main() {
 	sf::RectangleShape* activeBox = nullptr;
 
 	// Rendering Thread
+	std::atomic<int> threadOrders = ORDERS::RENDER;
 	std::mutex renderMutex;
-	std::atomic_bool killRenderThread = false;
 	std::thread renderThread(
-		[&programObjects, &editorObjects, &window, &mainView, &editorView, &renderMutex, &killRenderThread] {
+		[&programObjects, &editorObjects, &window, &mainView, &editorView, &renderMutex, &threadOrders] {
 			window.setActive(true);
-			while (!killRenderThread) {
-				renderMutex.lock();
-				window.clear();
-				window.setView(mainView);
-				for (const auto& object : programObjects) {
-					window.draw(object);
-				}
-				window.setView(editorView);
-				if (!editorObjects.empty()) {
-					for (const auto& object : editorObjects) {
+			while (window.isOpen()) {
+				switch (threadOrders)
+				{
+				case ORDERS::RENDER: {
+					renderMutex.lock();
+					window.clear();
+					window.setView(mainView);
+					for (const auto& object : programObjects) {
 						window.draw(object);
 					}
+					window.setView(editorView);
+					if (!editorObjects.empty()) {
+						for (const auto& object : editorObjects) {
+							window.draw(object);
+						}
+					}
+					window.display();
+					renderMutex.unlock();
 				}
-				window.display();
-				renderMutex.unlock();
+				case ORDERS::PAUSE: {
+					// do nothing
+					break;
+				}
+				case ORDERS::SEPPUKU: {
+					window.close();
+					window.setActive(false);
+					break;
+				}
+				default:
+					break;
+				}
 			}
-			window.close();
-			return;
 		}
 	);
 
@@ -87,7 +108,7 @@ int main() {
 				break;
 			}
 			case sf::Event::Closed: {
-				killRenderThread = true;
+				threadOrders = ORDERS::SEPPUKU;
 				renderThread.join();
 				break;
 			}
@@ -115,7 +136,7 @@ int main() {
 					break;
 				}
 				case sf::Keyboard::Escape: {
-					killRenderThread = true;
+					threadOrders = ORDERS::SEPPUKU;
 					renderThread.join();
 					break;
 				}
@@ -172,7 +193,8 @@ int main() {
 			}
 		}
 		// Logic
-		mainClock.Update();
+		long double deltaTime = mainClock.Update();
+		editorObjects[1].move(5 * deltaTime, 0);
 		window.setTitle(std::to_string(mainClock.FPS()));
 
 
