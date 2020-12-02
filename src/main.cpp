@@ -33,7 +33,6 @@ int main() {
 	window.setPosition(sf::Vector2i(1, 0));
 	window.setKeyRepeatEnabled(false);
 	window.setFramerateLimit(60);
-	window.setActive(false);
 
 	// Time Tracking
 	sf::Event evnt;
@@ -55,47 +54,6 @@ int main() {
 
 	sf::RectangleShape* activeBox = nullptr;
 
-	// Rendering Thread
-	std::atomic<int> threadOrders = ORDERS::RENDER;
-	std::mutex renderMutex;
-	std::thread renderThread(
-		[&programObjects, &editorObjects, &window, &mainView, &editorView, &renderMutex, &threadOrders] {
-			window.setActive(true);
-			while (window.isOpen()) {
-				switch (threadOrders)
-				{
-				case ORDERS::RENDER: {
-					renderMutex.lock();
-					window.clear();
-					window.setView(mainView);
-					for (const auto& object : programObjects) {
-						window.draw(object);
-					}
-					window.setView(editorView);
-					if (!editorObjects.empty()) {
-						for (const auto& object : editorObjects) {
-							window.draw(object);
-						}
-					}
-					window.display();
-					renderMutex.unlock();
-				}
-				case ORDERS::PAUSE: {
-					// do nothing
-					break;
-				}
-				case ORDERS::SEPPUKU: {
-					window.close();
-					window.setActive(false);
-					break;
-				}
-				default:
-					break;
-				}
-			}
-		}
-	);
-
 	while (window.isOpen()) {
 
 		// Input
@@ -108,8 +66,7 @@ int main() {
 				break;
 			}
 			case sf::Event::Closed: {
-				threadOrders = ORDERS::SEPPUKU;
-				renderThread.join();
+				window.close();
 				break;
 			}
 			case sf::Event::KeyPressed: {
@@ -136,8 +93,7 @@ int main() {
 					break;
 				}
 				case sf::Keyboard::Escape: {
-					threadOrders = ORDERS::SEPPUKU;
-					renderThread.join();
+					window.close();
 					break;
 				}
 				default:
@@ -199,7 +155,7 @@ int main() {
 
 
 		// Drawing
-		/*window.clear();
+		window.clear();
 		window.setView(mainView);
 		for (const auto& object : programObjects) {
 			window.draw(object);
@@ -210,6 +166,6 @@ int main() {
 				window.draw(object);
 			}
 		}
-		window.display();*/
+		window.display();
 	}
 }
