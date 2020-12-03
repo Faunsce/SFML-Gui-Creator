@@ -6,6 +6,6 @@
 #include "Application.hpp"
 
 int main() {
-	Application app;
+	faun::Application app;
 	app.run();
 }
