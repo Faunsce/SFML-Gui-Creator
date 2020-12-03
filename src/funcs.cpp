@@ -3,6 +3,10 @@
 
 namespace faun
 {
+	double CurrentAspectRatio(sf::Vector2u size) {
+		return (static_cast<double>(size.x) / size.y);
+	}
+
 	void adaptView(double aspectRatio, sf::View& view) {
 		// Check if program and window aspect ratios match
 		if (aspectRatio != (faun::TRUE_RENDER_ASPECT_RATIO)) {
