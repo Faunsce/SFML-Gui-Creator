@@ -30,6 +30,17 @@ namespace faun
 
 	}
 
+	void SceneNode::update(double long timeDelta) {
+		updateSelf(timeDelta);
+		for (const auto& child : children) {
+			child->update(timeDelta);
+		}
+	}
+
+	void SceneNode::updateSelf(double long timeDelta) {
+
+	}
+
 	void SceneNode::draw(sf::RenderTarget& target, sf::RenderStates states) const {
 		states.transform *= this->getTransform();
 		drawSelf(target, states);
@@ -38,11 +49,8 @@ namespace faun
 		}
 	}
 
-	void SceneNode::update(double long timeDelta) {
-		updateSelf(timeDelta);
-		for (const auto& child : children) {
-			child->update(timeDelta);
-		}
+	void SceneNode::drawSelf(sf::RenderTarget& target, sf::RenderStates states) const {
+
 	}
 
 	sf::Transform SceneNode::getWorldTransform() const {
