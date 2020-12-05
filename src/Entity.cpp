@@ -26,7 +26,7 @@ namespace faun
 	}
 
 	void Entity::updateSelf(double long deltaTime) {
-		sprite.move(velocity.x * deltaTime, velocity.y * deltaTime);
+		this->move(velocity.x * deltaTime, velocity.y * deltaTime);
 	}
 	
 	void Entity::drawSelf(sf::RenderTarget& target, sf::RenderStates states) const {
