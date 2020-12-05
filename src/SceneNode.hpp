@@ -11,8 +11,8 @@ namespace faun
 		~SceneNode();
 		void addChild(std::unique_ptr<SceneNode>);
 		std::unique_ptr<SceneNode> removeChild(const SceneNode&);
-	private:
 		void update(double long);
+	private:
 		virtual void updateSelf(double long);
 		virtual void draw(sf::RenderTarget&, sf::RenderStates) const final;
 		virtual void drawSelf(sf::RenderTarget&, sf::RenderStates) const;
